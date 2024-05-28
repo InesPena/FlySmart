@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Alarmas_IoT": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7235",
+      "launchBrowser": false
+    }
+  }
+}
