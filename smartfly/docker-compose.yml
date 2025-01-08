@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  flights-microservice:
+    build: ./flights-fastapi
+    ports:
+      - "127.0.0.1:8000:8000/tcp"
+    networks:
+      - app-network
+
+  bookings-microservice:
+    build: ./bookings-express
+    ports:
+      - "127.0.0.1:3000:3000/tcp"
+    networks:
+      - app-network
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/booking-service
+
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    networks:
+      - app-network
+
+  main-app:
+    build: ./gateway-fastapi
+    ports:
+      - "127.0.0.1:8080:8080/tcp"
+    environment:
+      - FLIGHTS_SERVICE_URL=http://flights-microservice:8000
+      - BOOKING_SERVICE_URL=http://bookings-microservice:3000
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo_data:

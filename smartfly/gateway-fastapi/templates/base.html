@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlySmart - Buscador de Vuelos</title>
+
+  <!-- Vincula el archivo CSS externo -->
+  <link rel="stylesheet" href="../static/css/styles.css" />
+
+  <!-- Vincula Bootstrap desde CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <header class="bg-dark text-white py-4">
+    <div class="container d-flex justify-content-between align-items-center">
+      <div>
+        <h1 class="fw-bold">
+          <a href="/" class="text-white text-decoration-none">FlySmart</a>
+        </h1>
+      </div>
+      <div class="d-flex align-items-center"+>
+        <span id="userEmailDisplay" class="ms-2 me-3" style="display: none;"></span>
+        
+        <!-- Botones del encabezado -->
+        <div id="authButtons">
+          <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#loginModal" id="loginButton"> Iniciar Sesión </button>
+          <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#registerModal" id="registerButton"> Registrarse </button>
+        </div>
+        <div id="loggedInButtons" style="display: none;">
+          <button type="button" class="btn btn-light" id="viewReservationsButton">Ver Reservas</button>
+          <button type="button" class="btn btn-danger me-2" id="logoutButton">Cerrar sesión</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="py-5" style="background: linear-gradient(to right, #34495e, #2c3e50);">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Modal de inicio de sesión -->
+  <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="loginModalLabel">Iniciar Sesión</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <form id="loginForm">
+            <div class="mb-3">
+              <label for="username" class="form-label">Nombre de usuario</label>
+              <input type="text" id="username" class="form-control" placeholder="Ingresa tu usuario" required>
+            </div>
+            <div class="mb-3">
+              <label for="password" class="form-label">Contraseña</label>
+              <input type="password" id="password" class="form-control" placeholder="Ingresa tu contraseña" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Entrar</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de registro -->
+  <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="registerModalLabel">Registrarse</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <form id="registerForm">
+            <div class="mb-3">
+              <label for="register-username" class="form-label">Nombre de usuario</label>
+              <input type="text" id="register-username" class="form-control" placeholder="Crea tu usuario" required>
+            </div>
+            <div class="mb-3">
+              <label for="register-email" class="form-label">Correo Electrónico</label>
+              <input type="email" id="register-email" class="form-control" placeholder="Ingresa tu correo" required>
+            </div>
+            <div class="mb-3">
+              <label for="register-password" class="form-label">Contraseña</label>
+              <input type="password" id="register-password" class="form-control" placeholder="Crea una contraseña" required>
+            </div>
+            <button type="submit" class="btn btn-success w-100">Registrarse</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    
+    // Verificar si el usuario ya está logueado
+    window.onload = function () {
+      const token = localStorage.getItem('token');
+      const email = localStorage.getItem('email');  
+
+      if (token) {
+        document.getElementById('authButtons').style.display = 'none';
+        document.getElementById('loggedInButtons').style.display = 'block';
+
+        if (email) {
+          document.getElementById('userEmailDisplay').style.display = 'inline';
+          document.getElementById('userEmailDisplay').textContent = `Bienvenido, ${email}`;
+        }
+      }
+    };
+
+    // Manejar el inicio de sesión
+    document.getElementById('loginForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const PREFIX_URL = window.location.protocol + "//" + window.location.host;
+
+      fetch(PREFIX_URL + '/login?username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.token) {
+            console.log('Login Exitoso:', data);
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('email', data.email);
+            alert("Login exitoso");
+            window.location.reload();
+          } else {
+            alert(data.error || 'Hubo un error con el inicio de sesión.');
+          }
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+        });
+    });
+
+    // Manejar el registro
+    document.getElementById('registerForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const username = document.getElementById('register-username').value;
+      const email = document.getElementById('register-email').value;
+      const password = document.getElementById('register-password').value;
+      const PREFIX_URL = window.location.protocol + "//" + window.location.host;
+
+      fetch(PREFIX_URL + '/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, email, password }),
+      })
+        .then(response => response.json())
+        .then(data => {
+            alert("Registro exitoso");
+            window.location.reload();
+        })
+        .catch((error) => {
+          alert(data.error || 'Hubo un error con el registro.');
+        });
+    });
+
+    // Ver reservas
+    document.getElementById('viewReservationsButton').addEventListener('click', function () {
+      const email = localStorage.getItem('email');
+      const PREFIX_URL = window.location.protocol + "//" + window.location.host;
+
+      fetch(PREFIX_URL + '/retrievebookings?email=' + encodeURIComponent(email), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      .then(response => {
+        if (response.status === 200) {
+          return response.text();
+        } else {
+          return null;
+        }
+      })
+      .then(html => {
+        if (html) {
+          window.location.href = PREFIX_URL + '/retrievebookings?email=' + encodeURIComponent(email);
+        }
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      });
+    });
+
+    // Manejar el logout
+    document.getElementById('logoutButton').addEventListener('click', function () {
+      localStorage.removeItem('token');
+      localStorage.removeItem('email');
+      window.location.reload();
+    });
+  </script>
+
+</body>
+
+</html>
