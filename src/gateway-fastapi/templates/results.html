@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}Resultados de Vuelo - FlySmart{% endblock %}
+
+{% block content %}
+    <div class="container">
+      <section class="search-results">
+        <h2 class="text-center mb-5 text-white">Resultados de tu búsqueda</h2>
+
+        <ul class="nav nav-pills justify-content-center mb-4">
+          <li class="nav-item">
+            <a class="nav-link active" id="outbound-tab" data-bs-toggle="pill" href="#outbound-flights">Ida</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="return-tab" data-bs-toggle="pill" href="#return-flights">Vuelta</a>
+          </li>
+        </ul>
+
+        <div class="tab-content">
+          <div id="outbound-flights" class="tab-pane fade show active">
+
+            {% for flight in outbound_flights %}
+            <div class="result-card mb-4 p-5 bg-white rounded shadow-lg">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-plane-departure fa-3x me-3 text-primary"></i>
+                <div>
+                  {% if flight.segments|length == 1 %}
+                  <h3>VUELO DIRECTO<h3>
+                  <h4>Vuelo:</h4>
+                  {% else %}
+                  <h3>VUELO CON ESCALAS</h3>
+                  <h4>Escalas:</h4>
+                  {% endif %}
+                  <ul class="list-unstyled">
+                    {% for segment in flight.segments %}
+                    <li>
+                      <strong>Vuelo {{ segment.flight_number }} ({{ segment.carrier }}):</strong> 
+                      {{ segment.departure }} → {{ segment.arrival }} <br>
+                      <strong>Salida:</strong> {{ segment.departure_time }} <br>
+                      <strong>Llegada:</strong> {{ segment.arrival_time }} <br>
+                    </li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              </div>
+              <div class="price-section text-end">
+                <h4>Desde</h4>
+                <h3 class="fw-bold price-text">{{ flight.price }} {{ flight.currency }}</h3>
+                <button class="btn btn-success btn-lg reserve-btn" 
+                  data-origin="{{ flight.segments[0].departure }}" 
+                  data-destination="{{ flight.segments[-1].arrival }}" 
+                  data-flight-number="{{ flight.segments[0].flight_number }}" 
+                  data-carrier="{{ flight.segments[0].carrier }}" 
+                  data-departure="{{ flight.segments[0].departure_time }}" 
+                  data-arrival="{{ flight.segments[-1].arrival_time }}" 
+                  data-price="{{ flight.price }}" >
+                  Reservar
+                </button>
+              </div>
+            </div>
+            {% endfor %}
+
+            {% if not outbound_flights %}
+            <p class="text-center text-white">No se encontraron vuelos de ida para los criterios seleccionados.</p>
+            {% endif %}
+          </div>
+
+          <div id="return-flights" class="tab-pane fade">
+
+            {% for flight in return_flights %}
+            <div class="result-card mb-4 p-5 bg-white rounded shadow-lg">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-plane-return fa-3x me-3 text-primary"></i>
+                <div>
+                  {% if flight.segments|length == 1 %}
+                  <h3>VUELO DIRECTO<h3>
+                  <h4>Vuelo:</h4>
+                  {% else %}
+                  <h3>VUELO CON ESCALAS</h3>
+                  <h4>Escalas:</h4>
+                  {% endif %}
+                  <ul class="list-unstyled">
+                    {% for segment in flight.segments %}
+                    <li>
+                      <strong>Vuelo {{ segment.flight_number }} ({{ segment.carrier }}):</strong> 
+                      {{ segment.departure }} → {{ segment.arrival }} <br>
+                      <strong>Salida:</strong> {{ segment.departure_time }} <br>
+                      <strong>Llegada:</strong> {{ segment.arrival_time }} <br> <br>
+                    </li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              </div>
+              <div class="price-section text-end">
+                <h4>Desde</h4>
+                <h3 class="fw-bold price-text">{{ flight.price }} {{ flight.currency }}</h3>
+                <button class="btn btn-success btn-lg reserve-btn" 
+                  data-origin="{{ flight.segments[0].departure }}" 
+                  data-destination="{{ flight.segments[-1].arrival }}" 
+                  data-flight-number="{{ flight.segments[0].flight_number }}" 
+                  data-carrier="{{ flight.segments[0].carrier }}" 
+                  data-departure="{{ flight.segments[0].departure_time }}" 
+                  data-arrival="{{ flight.segments[-1].arrival_time }}" 
+                  data-price="{{ flight.price }}" >
+                  Reservar
+                </button>
+              </div>
+            </div>
+            {% endfor %}
+
+            {% if not return_flights %}
+            <p class="text-center text-white">No se encontraron vuelos de vuelta para los criterios seleccionados.</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Modal para la Reserva -->
+        <div class="modal fade" id="reservationModal" tabindex="-1" aria-labelledby="reservationModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="reservationModalLabel">Detalles de la Reserva</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <div class="tab-content mt-3">
+                  <!-- Información del pasajero -->
+                  <div class="tab-pane fade show active" id="passenger-info" role="tabpanel" aria-labelledby="passenger-tab">
+                    <form id="reservationForm">
+                      <div class="mb-3">
+                        <label for="passengerName" class="form-label">Nombre del pasajero</label>
+                        <input type="text" class="form-control" id="passengerName" required>
+                      </div>
+                      <div class="mb-3">
+                        <label for="dni" class="form-label">DNI</label>
+                        <input type="text" class="form-control" id="dni" required>
+                      </div>
+                      <div class="mb-3">
+                        <label for="class" class="form-label">Clase</label>
+                        <select class="form-select" id="class" required>
+                          <option value="economy">Económica</option>
+                          <option value="business">Primera Clase (+100€)</option>
+                        </select>
+                      </div>
+                      <div class="mb-3">
+                        <label for="baggageCount" class="form-label">Número de maletas (1 maleta = 50€)</label>
+                        <div class="input-group">
+                          <input type="number" class="form-control" id="baggageCount" value="0" min="0" step="1" required>
+                        </div>
+                      </div>
+                      <button type="submit" class="btn btn-success">Finalizar Reserva</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+
+    window.onload = function() {
+      const currentUrl = window.location.href;
+      localStorage.setItem('currentUrl', currentUrl);
+    };
+   
+    function isUserLoggedIn() {
+      return !!localStorage.getItem('token'); 
+    }
+  
+    // Evento para el botón "Reservar"
+    document.querySelectorAll('.reserve-btn').forEach(button => {
+      button.addEventListener('click', function(event) {
+
+        if (!isUserLoggedIn()) {
+          event.preventDefault(); 
+          alert("Debes iniciar sesión antes de continuar con la compra.");
+          return;
+        }
+  
+        // Obtener los detalles del vuelo desde los atributos data- del botón
+        const flightInfo = {
+          origin: button.getAttribute('data-origin'),
+          destination: button.getAttribute('data-destination'),
+          flightNumber: button.getAttribute('data-flight-number'),
+          carrier: button.getAttribute('data-carrier'),
+          departure: button.getAttribute('data-departure'),
+          arrival: button.getAttribute('data-arrival'),
+          isDirect: button.getAttribute('data-is-direct')
+        };
+  
+        const modal = new bootstrap.Modal(document.getElementById('reservationModal'));
+        modal.show();
+  
+        // Evento para el envío del formulario
+        document.getElementById("reservationForm").addEventListener("submit", function(e) {
+          e.preventDefault(); 
+  
+          const name = document.getElementById('passengerName').value;
+          const dni = document.getElementById('dni').value;
+          const email = localStorage.getItem('email');
+          const ticketNumber = generateTicketNumber(); 
+          const flightClass = document.getElementById('class').value;
+          const baggageCount = document.getElementById('baggageCount').value;
+  
+          const flightDetails = {
+            origin: flightInfo.origin,
+            destination: flightInfo.departure,
+            number: flightInfo.flightNumber,
+            carrier: flightInfo.carrier,
+            departure: flightInfo.departure,
+            arrival: flightInfo.arrival,
+            class: flightClass,
+            baggageCount: baggageCount,
+            isDirect: flightInfo.isDirect
+          };
+
+          const PREFIX_URL = window.location.protocol + "//" + window.location.host;
+  
+          fetch(PREFIX_URL +'/bookflight', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name, dni, email, ticketNumber, flightDetails })
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Error en la solicitud');
+            }
+            return response.json();
+          })
+          .then(data => {
+            calert('Reserva completada');
+            window.location.reload();
+          })
+          .catch((error) => {
+            alert(data.error || 'Hubo un error en la reserva.');
+          });
+        });
+      });
+    });
+  
+    function generateTicketNumber() {
+      return 'TKT-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+    }
+  </script>
+  
+{% endblock %}

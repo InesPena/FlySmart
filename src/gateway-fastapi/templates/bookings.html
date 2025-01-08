@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5" style="background: linear-gradient(to right, #34495e, #2c3e50);" >
+  <h2 class="text-center mb-5 text-white">Historial de reservas</h2>
+  {% if bookings %}
+    {% for booking in bookings %}
+      <!-- Datos Personales -->
+      <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+          <h5>Datos Personales</h5>
+        </div>
+        <div class="card-body">
+          <p><strong>Nombre del Pasajero:</strong> {{ booking.name }}</p>
+          <p><strong>Email:</strong> {{ booking.email }}</p>
+          <p><strong>DNI:</strong> {{ booking.dni }}</p>
+          <p><strong>Número de Boleto:</strong> {{ booking.ticketNumber }}</p>
+        </div>
+      </div>
+
+      <!-- Datos del Vuelo -->
+      <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">
+          <h5>Datos del Vuelo</h5>
+        </div>
+        <div class="card-body">
+          <table class="table table-bordered">
+            <thead class="table-light">
+              <tr>
+                <th>Origen</th>
+                <th>Destino</th>
+                <th>Número de Vuelo</th>
+                <th>Aerolínea</th>
+                <th>Salida</th>
+                <th>Llegada</th>
+                <th>Clase</th>
+                <th>Equipaje</th>
+                <th>Tipo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{{ booking.flight.origin }}</td>
+                <td>{{ booking.flight.destination }}</td>
+                <td>{{ booking.flight.number }}</td>
+                <td>{{ booking.flight.carrier }}</td>
+                <td>{{ booking.flight.departure }}</td>
+                <td>{{ booking.flight.arrival }}</td>
+                <td>{{ booking.flight.class }}</td>
+                <td>{{ booking.flight.baggageCount }}</td>
+                <td>
+                  {% if booking.flight.type %}
+                    Ida
+                  {% else %}
+                    Ida y Vuelta
+                  {% endif %}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="alert alert-warning">
+      No se encontraron reservas para este usuario.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
